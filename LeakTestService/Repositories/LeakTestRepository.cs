@@ -328,7 +328,7 @@ public class LeakTestRepository : ILeakTestRepository
         
         catch (InfluxException influxException)
         {
-            throw new InfluxException("Could not save data", influxException);
+            throw new InfluxException($"Could not save data due to: {influxException.Message}", influxException);
         }
         catch (Exception ex)
         {

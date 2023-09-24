@@ -20,6 +20,7 @@ public static class ConfigurationInitializer
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         var machineName = Environment.MachineName;
         
+        
         // method to configure the settings of the app. It takes an Action as parameter (the host context "ctx") and the 
         // configbuilder "builder" as parameters. 
         host.ConfigureAppConfiguration((ctx, builder) =>
@@ -34,7 +35,7 @@ public static class ConfigurationInitializer
             builder.AddJsonFile($"appsettings.{environment}.json", true, true);
             
             // same as above but for any specific machine.
-            builder.AddJsonFile($"appsettings.{machineName}.json", true, true);
+            //builder.AddJsonFile($"appsettings.{machineName}.json", true, true);
             
             // this line is to be commented out if the local server is not running. 
             //builder.AddJsonFile($"appsettings.ubuntu-local-server.json", true, true);
