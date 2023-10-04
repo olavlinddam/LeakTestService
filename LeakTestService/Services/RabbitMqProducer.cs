@@ -15,7 +15,7 @@ public class RabbitMqProducer : IRabbitMqProducer
         _config = options.Value;
     }
 
-    public void SendLeakTestMessage<T>(T message)
+    public void SendMessage<T>(T message)
     {
         var factory = new ConnectionFactory
         {

@@ -143,7 +143,7 @@ public class LeakTestController : ControllerBase
                 { "self", $"{baseUrl}/api/LeakTests/{leakTest.LeakTestId}" }
             };
 
-            _rabbitMqProducer.SendLeakTestMessage(leakTest);
+            _rabbitMqProducer.SendMessage(leakTest);
             return Ok(JsonConvert.SerializeObject(leakTest, Formatting.Indented));
         }
         catch (Exception e)

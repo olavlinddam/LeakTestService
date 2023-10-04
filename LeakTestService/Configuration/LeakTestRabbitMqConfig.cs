@@ -1,6 +1,6 @@
 namespace LeakTestService.Configuration;
 
-public class LeakTestServiceConfig : RabbitMqConfig
+public class LeakTestRabbitMqConfig : RabbitMqConfig
 {
     public string UserName { get; set; }
     public string Password { get; set; }
