@@ -35,7 +35,7 @@ public static class ConfigurationInitializer
             builder.AddJsonFile($"appsettings.{environment}.json", true, true);
             
             // same as above but for any specific machine.
-            //builder.AddJsonFile($"appsettings.{machineName}.json", true, true);
+            builder.AddJsonFile($"appsettings.{machineName}.json", true, true);
             
             // this line is to be commented out if the local server is not running. 
             //builder.AddJsonFile($"appsettings.ubuntu-local-server.json", true, true);

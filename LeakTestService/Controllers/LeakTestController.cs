@@ -4,8 +4,12 @@ using LeakTestService.Models;
 using LeakTestService.Repositories;
 using Newtonsoft.Json;
 using InfluxDB.Client.Core.Exceptions;
+using LeakTestService.Configuration;
 using LeakTestService.Exceptions;
 using LeakTestService.Models.Validation;
+using LeakTestService.Services;
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 
 
 namespace LeakTestService.Controllers;
@@ -15,11 +19,14 @@ namespace LeakTestService.Controllers;
 public class LeakTestController : ControllerBase
 {
     private readonly ILeakTestRepository _leakTestRepository;
-
-    public LeakTestController(ILeakTestRepository leakTestRepository)
+    private readonly IRabbitMqProducer _rabbitMqProducer;
+    
+    public LeakTestController(ILeakTestRepository leakTestRepository, IRabbitMqProducer rabbitMqProducer)
     {
         _leakTestRepository = leakTestRepository;
+        _rabbitMqProducer = rabbitMqProducer;
     }
+    
 
     
     [HttpPost("Batch")] 
@@ -136,6 +143,7 @@ public class LeakTestController : ControllerBase
                 { "self", $"{baseUrl}/api/LeakTests/{leakTest.LeakTestId}" }
             };
 
+            _rabbitMqProducer.SendLeakTestMessage(leakTest);
             return Ok(JsonConvert.SerializeObject(leakTest, Formatting.Indented));
         }
         catch (Exception e)

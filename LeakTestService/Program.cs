@@ -4,7 +4,9 @@ using LeakTestService.Configuration;
 using LeakTestService.Models;
 using LeakTestService.Models.Validation;
 using LeakTestService.Repositories;
+using LeakTestService.Services;
 using LeakTestService.Startup;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,8 @@ builder.Host.ConfigureAppSettings();
 
 // Add services to the container. First we add the InfluxDbConfig to the dependency injection container. 
 builder.Services.Configure<InfluxDbConfig>(builder.Configuration.GetSection("InfluxDbConfigSettings"));
+builder.Services.Configure<LeakTestServiceConfig>(builder.Configuration.GetSection("RabbitMqConfigurations:LeakTestServiceConfig"));
+
 builder.Services.AddControllers();
 
 
@@ -24,6 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ILeakTestRepository, LeakTestRepository>();
 builder.Services.AddTransient<IValidator<LeakTest>, LeakTestValidator>();
+builder.Services.AddTransient<IRabbitMqProducer, RabbitMqProducer>();
 
 var app = builder.Build();
 
