@@ -1,6 +1,8 @@
+using RabbitMQ.Client.Events;
+
 namespace LeakTestService.Services;
 
-public interface IRabbitMqConsumer
+public interface IRabbitMqConsumer : IDisposable
 {
-    public Task<string?> Listen();
+    
 }
