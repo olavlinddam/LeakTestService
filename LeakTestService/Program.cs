@@ -51,17 +51,6 @@ var rabbitMqConsumer = app.Services.GetRequiredService<IRabbitMqConsumer>();
 
 lifetime.ApplicationStopping.Register(() => rabbitMqConsumer.Dispose());
 
-// var config = new ConfigurationBuilder()
-//     .AddJsonFile("appsettings.json")
-//     .AddEnvironmentVariables()
-//     .Build();
-
-// Load the influxDB configurations from appsettings.json
-// var influxDbConfigSettings = builder.Configuration.GetRequiredSection("InfluxDbConfigSettings").Get<InfluxDbConfig>();
-// var bucket = influxDbConfigSettings?.Bucket;
-// var url = influxDbConfigSettings?.Url;
-// var token = influxDbConfigSettings?.Token;
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
