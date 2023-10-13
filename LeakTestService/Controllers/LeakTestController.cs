@@ -19,12 +19,12 @@ namespace LeakTestService.Controllers;
 public class LeakTestController : ControllerBase
 {
     private readonly ILeakTestRepository _leakTestRepository;
-    private readonly IRabbitMqProducer _rabbitMqProducer;
+    private readonly IMessageProducer _messageProducer;
     
-    public LeakTestController(ILeakTestRepository leakTestRepository, IRabbitMqProducer rabbitMqProducer)
+    public LeakTestController(ILeakTestRepository leakTestRepository, IMessageProducer messageProducer)
     {
         _leakTestRepository = leakTestRepository;
-        _rabbitMqProducer = rabbitMqProducer;
+        _messageProducer = messageProducer;
     }
     
 
@@ -122,6 +122,7 @@ public class LeakTestController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
+        const string routingKey = "GetById";
         try
         {
             // Getting the LeakTest from the database by id. 
@@ -143,7 +144,7 @@ public class LeakTestController : ControllerBase
                 { "self", $"{baseUrl}/api/LeakTests/{leakTest.LeakTestId}" }
             };
 
-            _rabbitMqProducer.SendMessage(leakTest);
+            _messageProducer.SendMessage(leakTest, routingKey);
             return Ok(JsonConvert.SerializeObject(leakTest, Formatting.Indented));
         }
         catch (Exception e)

@@ -35,10 +35,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<ILeakTestRepository, LeakTestRepository>();
 builder.Services.AddTransient<IValidator<LeakTest>, LeakTestValidator>();
-builder.Services.AddTransient<IRabbitMqProducer, RabbitMqProducer>();
+builder.Services.AddTransient<IMessageProducer, MessageProducer>();
 
 // Adding the rabbitmq consumer as a singleton
-builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
+builder.Services.AddSingleton<IMessageConsumer, MessageConsumer>();
 
 // Adding the BackGroundService consumer as a hosted service.
 builder.Services.AddHostedService<ConsumerBackgroundService>();
@@ -47,7 +47,7 @@ builder.Services.AddHostedService<ConsumerBackgroundService>();
 var app = builder.Build();
 
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-var rabbitMqConsumer = app.Services.GetRequiredService<IRabbitMqConsumer>();
+var rabbitMqConsumer = app.Services.GetRequiredService<IMessageConsumer>();
 
 lifetime.ApplicationStopping.Register(() => rabbitMqConsumer.Dispose());
 
@@ -59,11 +59,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-app.UseMiddleware<RoutingMiddleware>();
+// app.UseMiddleware<RoutingMiddleware>();
 
 app.MapControllers();
 

@@ -14,12 +14,17 @@
     </ItemGroup>
     
     <ItemGroup>
+      <PackageReference Include="EasyNetQ" Version="8.0.0-beta94" />
       <PackageReference Include="FluentValidation" Version="11.7.1" />
       <PackageReference Include="InfluxDB.Client" Version="4.14.0-dev.11972" />
       <PackageReference Include="InfluxDB.Client.Linq" Version="4.14.0-dev.11972" />
       <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10"/>
       <PackageReference Include="RabbitMQ.Client" Version="6.5.0" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Services\Consumers\" />
     </ItemGroup>
 
 

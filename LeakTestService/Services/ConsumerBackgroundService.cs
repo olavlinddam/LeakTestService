@@ -8,22 +8,31 @@ namespace LeakTestService.Services;
 
 public class ConsumerBackgroundService : BackgroundService
 {
-    private readonly IRabbitMqConsumer _consumer;
+    private readonly IMessageConsumer _messageConsumer;
+
 
     public ConsumerBackgroundService(IOptions<LeakTestRabbitMqConfig> configOptions)
     {
-        _consumer = new RabbitMqConsumer(configOptions);
+        _messageConsumer = new MessageConsumer(configOptions);
+        _messageConsumer.StartListening();
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Since our consumer is already listening after being initialized in the constructor, we dont need to do anything here.
+        stoppingToken.Register(() =>
+        {
+            // Logging and cleanup logic here
+        });
+
+        // Start listening for messages
+        _messageConsumer.StartListening();
+
         return Task.CompletedTask;
     }
 
     public override async Task StopAsync(CancellationToken stoppingToken)
     {
-        _consumer.Dispose();
+        _messageConsumer.Dispose();
         await base.StopAsync(stoppingToken);
     }
 }
