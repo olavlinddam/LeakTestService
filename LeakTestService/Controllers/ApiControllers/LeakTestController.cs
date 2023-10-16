@@ -1,18 +1,15 @@
 using System.Globalization;
-using Microsoft.AspNetCore.Mvc;
-using LeakTestService.Models;
-using LeakTestService.Repositories;
-using Newtonsoft.Json;
+using FluentValidation;
 using InfluxDB.Client.Core.Exceptions;
-using LeakTestService.Configuration;
 using LeakTestService.Exceptions;
+using LeakTestService.Models;
 using LeakTestService.Models.Validation;
+using LeakTestService.Repositories;
 using LeakTestService.Services;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
-
-namespace LeakTestService.Controllers;
+namespace LeakTestService.Controllers.ApiControllers;
 
 [ApiController]
 [Route("api/LeakTests")]
@@ -82,6 +79,44 @@ public class LeakTestController : ControllerBase
         }
     }
 
+
+    public async Task<Guid> AddSingleAsync(string leakTestString)
+    {
+        try
+        {
+            LeakTest leakTest = JsonConvert.DeserializeObject<LeakTest>(leakTestString);
+
+            // making sure that "user" and "status" are upper cased.
+            leakTest.User = leakTest.User.ToUpper();
+            leakTest.Status = leakTest.Status.ToUpper();
+            
+            // adding the GUID to identify the LeakTest
+            leakTest.LeakTestId = Guid.NewGuid();
+            
+            // Creating the validator and validating the LeakTest object.
+            var validator = new LeakTestValidator();
+            var validationResult = await validator.ValidateAsync(leakTest);
+            
+            // setting the id of the leaktest. 
+            leakTest.LeakTestId = Guid.NewGuid();
+            
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException($"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
+            }
+            
+            // Posting the LeakTest object as a point in the database. 
+            await _leakTestRepository.AddSingleAsync(leakTest);
+            
+            // Return the id of the newly created leak test
+            return (Guid)leakTest.LeakTestId;
+        }
+        catch (Exception e)
+        {
+            // Log the exception here
+            throw new Exception($"The request could not be processed due to: {e.Message}");
+        }
+    }
     [HttpPost]
     public async Task<IActionResult> AddSingleAsync([FromBody] LeakTest leakTest)
     {

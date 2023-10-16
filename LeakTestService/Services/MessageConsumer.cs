@@ -1,5 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using LeakTestService.Configuration;
+using LeakTestService.Controllers;
+using LeakTestService.Controllers.ApiControllers;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -13,10 +16,11 @@ public class MessageConsumer : IMessageConsumer
     private readonly IConnection _connection;
     private readonly IModel _channel;
     private readonly EventingBasicConsumer _consumer;
-
-    public MessageConsumer(IOptions<LeakTestRabbitMqConfig> configOptions)
+    private readonly IServiceProvider _serviceProvider;
+    public MessageConsumer(IOptions<LeakTestRabbitMqConfig> configOptions, IServiceProvider serviceProvider)
     {
         _config = configOptions.Value;
+        _serviceProvider = serviceProvider;
         
         var factory = new ConnectionFactory
         {
@@ -25,30 +29,33 @@ public class MessageConsumer : IMessageConsumer
             VirtualHost = _config.VirtualHost,  
             HostName = _config.HostName,
             //Port = int.Parse(_config.Port),
-            Port = 5671,
+            Port = 5672,
             ClientProvidedName = _config.ClientProvidedName
         };
         
          _connection = factory.CreateConnection();
          _channel = _connection.CreateModel();
         
-         //_channel.ExchangeDeclare(_config.ExchangeName, ExchangeType.Direct);//
+         _channel.ExchangeDeclare("leaktest-exchange", ExchangeType.Direct, durable: true);
         
          _channel.QueueDeclare("leaktest-request-queue", exclusive: false);
+         _channel.QueueBind("leaktest-request-queue", "leaktest-exchange", "leaktest-request-queue");
+
     }
     
 
     public void StartListening()
     {
         var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += (model, ea) =>
+        consumer.Received += async (model, ea) =>
         {
             Console.WriteLine($"Received request: {ea.BasicProperties.CorrelationId}");
+            
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
 
             // Process the message
-            var responseMessage = ProcessRequest(message);
+            var responseMessage = await ProcessRequest(message);
 
             // Send the response back
             var responseBody = Encoding.UTF8.GetBytes(responseMessage);
@@ -74,9 +81,24 @@ public class MessageConsumer : IMessageConsumer
         _connection?.Dispose();
     }
     
-    private string ProcessRequest(string requestMessage)
+    private async Task<string> ProcessRequest(string requestMessage)
     {
-        // Your logic to process the request and generate a response
-        return requestMessage;
+        using var doc = JsonDocument.Parse(requestMessage);
+        var formattedDoc= doc.RootElement.ToString();
+        
+        // Creating a scope to access the controller
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
+            
+            // Passing the message to the controller to get an ID of the created resource back
+            var leakTestId = await leakTestHandler.AddSingleAsync(formattedDoc);
+            
+            var processedRequest = leakTestId.ToString();
+            return processedRequest;
+
+        }
     }
+    
+    
 }

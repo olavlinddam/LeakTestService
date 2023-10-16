@@ -1,5 +1,6 @@
 using System.Text;
 using LeakTestService.Configuration;
+using LeakTestService.Controllers;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -11,9 +12,9 @@ public class ConsumerBackgroundService : BackgroundService
     private readonly IMessageConsumer _messageConsumer;
 
 
-    public ConsumerBackgroundService(IOptions<LeakTestRabbitMqConfig> configOptions)
+    public ConsumerBackgroundService(IOptions<LeakTestRabbitMqConfig> configOptions, IServiceProvider serviceProvider)
     {
-        _messageConsumer = new MessageConsumer(configOptions);
+        _messageConsumer = new MessageConsumer(configOptions, serviceProvider);
         _messageConsumer.StartListening();
     }
 

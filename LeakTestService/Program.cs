@@ -2,6 +2,7 @@ using System.Configuration;
 using FluentValidation;
 using LeakTestService;
 using LeakTestService.Configuration;
+using LeakTestService.Controllers;
 using LeakTestService.Middleware;
 using LeakTestService.Models;
 using LeakTestService.Models.Validation;
@@ -32,10 +33,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<LeakTestHandler>();
 
-builder.Services.AddScoped<ILeakTestRepository, LeakTestRepository>();
+builder.Services.AddTransient<ILeakTestRepository, LeakTestRepository>();
 builder.Services.AddTransient<IValidator<LeakTest>, LeakTestValidator>();
-builder.Services.AddTransient<IMessageProducer, MessageProducer>();
+builder.Services.AddSingleton<IMessageProducer, MessageProducer>();
 
 // Adding the rabbitmq consumer as a singleton
 builder.Services.AddSingleton<IMessageConsumer, MessageConsumer>();
@@ -50,6 +52,8 @@ var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 var rabbitMqConsumer = app.Services.GetRequiredService<IMessageConsumer>();
 
 lifetime.ApplicationStopping.Register(() => rabbitMqConsumer.Dispose());
+
+
 
 
 // Configure the HTTP request pipeline.
