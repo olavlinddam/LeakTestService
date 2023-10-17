@@ -58,4 +58,30 @@ public class LeakTestHandler
             throw new Exception($"The request could not be processed due to: {e.Message}");
         }
     }
+    
+    
+    public async Task<string> GetById(Guid id)
+    {
+        try
+        {
+            // Getting the LeakTest from the database by id. 
+            var leakTest = await _leakTestRepository.GetByIdAsync(id);
+            
+            // Creating the validator and validating the LeakTest object.
+            var validator = new LeakTestValidator();
+            var validationResult = await validator.ValidateAsync(leakTest);
+            
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException($"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
+            }
+            
+            return JsonSerializer.Serialize(leakTest, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception e)
+        {
+            // Log the exception here
+            throw new Exception($"The request could not be processed due to: {e.Message}");
+        }
+    }
 }

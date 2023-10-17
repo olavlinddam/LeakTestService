@@ -2,22 +2,24 @@ using System.Text;
 using System.Text.Json;
 using LeakTestService.Configuration;
 using LeakTestService.Controllers;
-using LeakTestService.Controllers.ApiControllers;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace LeakTestService.Services;
+namespace LeakTestService.Services.Consumers;
 
-public class MessageConsumer : IMessageConsumer
+public class GetByIdConsumer : IMessageConsumer
 {
     private readonly LeakTestRabbitMqConfig _config;
     private readonly IConnection _connection;
     private readonly IModel _channel;
     private readonly EventingBasicConsumer _consumer;
     private readonly IServiceProvider _serviceProvider;
-    public MessageConsumer(IOptions<LeakTestRabbitMqConfig> configOptions, IServiceProvider serviceProvider)
+    private const string queueName = "get-by-id-requests";
+    private const string routingKey = "get-by-id-route";
+
+    
+    public GetByIdConsumer(IOptions<LeakTestRabbitMqConfig> configOptions, IServiceProvider serviceProvider)
     {
         _config = configOptions.Value;
         _serviceProvider = serviceProvider;
@@ -38,8 +40,8 @@ public class MessageConsumer : IMessageConsumer
         
          _channel.ExchangeDeclare("leaktest-exchange", ExchangeType.Direct, durable: true);
         
-         _channel.QueueDeclare("leaktest-request-queue", exclusive: false);
-         _channel.QueueBind("leaktest-request-queue", "leaktest-exchange", "leaktest-request-queue");
+         _channel.QueueDeclare("get-by-id-requests", exclusive: false);
+         _channel.QueueBind("get-by-id-requests", "leaktest-exchange", "get-by-id-route");
 
     }
     
@@ -72,7 +74,7 @@ public class MessageConsumer : IMessageConsumer
             //_channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         };
 
-        _channel.BasicConsume(queue: "leaktest-request-queue", autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: "get-by-id-requests", autoAck: true, consumer: consumer);
     }
 
     public void Dispose()
@@ -83,8 +85,7 @@ public class MessageConsumer : IMessageConsumer
     
     private async Task<string> ProcessRequest(string requestMessage)
     {
-        using var doc = JsonDocument.Parse(requestMessage);
-        var formattedDoc= doc.RootElement.ToString();
+        Guid id = Guid.Parse(requestMessage);
         
         // Creating a scope to access the controller
         using (var scope = _serviceProvider.CreateScope())
@@ -92,7 +93,7 @@ public class MessageConsumer : IMessageConsumer
             var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
             
             // Passing the message to the controller to get an ID of the created resource back
-            var leakTestId = await leakTestHandler.AddSingleAsync(formattedDoc);
+            var leakTestId = await leakTestHandler.GetById(id);
             
             var processedRequest = leakTestId.ToString();
             return processedRequest;

@@ -8,6 +8,8 @@ using LeakTestService.Models;
 using LeakTestService.Models.Validation;
 using LeakTestService.Repositories;
 using LeakTestService.Services;
+using LeakTestService.Services.BackgroundServices;
+using LeakTestService.Services.Consumers;
 using LeakTestService.Startup;
 using RabbitMQ.Client;
 
@@ -40,10 +42,12 @@ builder.Services.AddTransient<IValidator<LeakTest>, LeakTestValidator>();
 builder.Services.AddSingleton<IMessageProducer, MessageProducer>();
 
 // Adding the rabbitmq consumer as a singleton
-builder.Services.AddSingleton<IMessageConsumer, MessageConsumer>();
+builder.Services.AddSingleton<IMessageConsumer, AddSingleConsumer>();
+builder.Services.AddSingleton<IMessageConsumer, GetByIdConsumer>();
 
 // Adding the BackGroundService consumer as a hosted service.
-builder.Services.AddHostedService<ConsumerBackgroundService>();
+builder.Services.AddHostedService<AddSingleBackgroundService>();
+builder.Services.AddHostedService<GetByIdBackgroundService>();
 
 
 var app = builder.Build();
