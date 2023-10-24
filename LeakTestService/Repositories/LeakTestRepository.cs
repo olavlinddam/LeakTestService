@@ -58,10 +58,11 @@ public class LeakTestRepository : ILeakTestRepository
                 {
                     DropMeasurementColumn = false
                 };
-        
+
+                
                 // Creating the query to pull all points from the specified bucket and mapping each to a LeakTest objects
                 var query = from t in InfluxDBQueryable<LeakTest>
-                        .Queryable(_config.Bucket, _config.Org, queryApi, converter, optimizerSettings)
+                        .Queryable(_config.Bucket, _config.Org, queryApi, optimizerSettings)
                     select t;
             
                 var leakTests = query.ToList();

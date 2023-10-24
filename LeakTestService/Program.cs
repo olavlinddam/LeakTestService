@@ -48,6 +48,8 @@ builder.Services.AddSingleton<IMessageConsumer, GetByIdConsumer>();
 // Adding the BackGroundService consumer as a hosted service.
 builder.Services.AddHostedService<AddSingleBackgroundService>();
 builder.Services.AddHostedService<GetByIdBackgroundService>();
+builder.Services.AddHostedService<AddBatchBackgroundService>();
+builder.Services.AddHostedService<GetAllBackgroundService>();
 
 
 var app = builder.Build();
