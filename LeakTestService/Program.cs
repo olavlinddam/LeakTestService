@@ -50,6 +50,10 @@ builder.Services.AddHostedService<AddSingleBackgroundService>();
 builder.Services.AddHostedService<GetByIdBackgroundService>();
 builder.Services.AddHostedService<AddBatchBackgroundService>();
 builder.Services.AddHostedService<GetAllBackgroundService>();
+builder.Services.AddHostedService<GetByTagBackgroundService>();
+builder.Services.AddHostedService<GetByFieldBackgroundService>();
+builder.Services.AddHostedService<GetWithinTimeFrameBackgroundService>();
+
 
 
 var app = builder.Build();
