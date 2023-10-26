@@ -39,7 +39,7 @@ public class GetWithinTimeFrameConsumer : IMessageConsumer
         
          _channel.ExchangeDeclare(_config.ExchangeName, ExchangeType.Direct, durable: true);
         
-         _channel.QueueDeclare(queueName, exclusive: false);
+         _channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
          _channel.QueueBind(queueName, _config.ExchangeName, routingKey);
 
     }
@@ -67,10 +67,13 @@ public class GetWithinTimeFrameConsumer : IMessageConsumer
             // Send the response back
             var responseBody = Encoding.UTF8.GetBytes(responseMessage);
             
+            var replyProperties = _channel.CreateBasicProperties();
+            replyProperties.CorrelationId = ea.BasicProperties.CorrelationId;
+
             _channel.BasicPublish(
                 exchange: "",
                 routingKey: ea.BasicProperties.ReplyTo,
-                basicProperties: null, // potentielt skal vi sende corr id med.
+                basicProperties: replyProperties,
                 body: responseBody
             );
             
@@ -88,7 +91,7 @@ public class GetWithinTimeFrameConsumer : IMessageConsumer
         _connection?.Dispose();
     }
     
-    private async Task<string> ProcessRequest(DateTime key, DateTime value)
+    private async Task<string> ProcessRequest(DateTime start, DateTime end)
     {
         // Creating a scope to access the controller
         using (var scope = _serviceProvider.CreateScope())
@@ -96,7 +99,7 @@ public class GetWithinTimeFrameConsumer : IMessageConsumer
             var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
             
             // Passing the message to the controller to get an ID of the created resource back
-            var leakTests = await leakTestHandler.GetWithinTimeRangeAsync(key, value);
+            var leakTests = await leakTestHandler.GetWithinTimeRangeAsync(start, end);
 
             var processedRequest = leakTests;
             return processedRequest;

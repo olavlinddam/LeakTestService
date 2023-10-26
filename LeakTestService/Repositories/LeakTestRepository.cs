@@ -325,6 +325,7 @@ public class LeakTestRepository : ILeakTestRepository
         try
         {
             await _client.GetWriteApiAsync().WriteMeasurementAsync(leakTest);
+
         }
         
         catch (InfluxException influxException)

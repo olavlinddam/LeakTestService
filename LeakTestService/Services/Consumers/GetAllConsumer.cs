@@ -39,7 +39,7 @@ public class GetAllConsumer : IMessageConsumer
         
          _channel.ExchangeDeclare(_config.ExchangeName, ExchangeType.Direct, durable: true);
         
-         _channel.QueueDeclare(queueName, exclusive: false);
+         _channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
          _channel.QueueBind(queueName, _config.ExchangeName, routingKey);
 
     }
@@ -61,10 +61,13 @@ public class GetAllConsumer : IMessageConsumer
             // Send the response back
             var responseBody = Encoding.UTF8.GetBytes(responseMessage);
             
+            var replyProperties = _channel.CreateBasicProperties();
+            replyProperties.CorrelationId = ea.BasicProperties.CorrelationId;
+
             _channel.BasicPublish(
                 exchange: "",
                 routingKey: ea.BasicProperties.ReplyTo,
-                basicProperties: null, // potentielt skal vi sende corr id med.
+                basicProperties: replyProperties,
                 body: responseBody
             );
             

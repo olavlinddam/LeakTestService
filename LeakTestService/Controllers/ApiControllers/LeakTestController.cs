@@ -107,7 +107,8 @@ public class LeakTestController : ControllerBase
             await _leakTestRepository.AddSingleAsync(leakTest);
             
             // Returner en 201 Created statuskode og en Location header
-            return CreatedAtAction(nameof(GetById), new { id = leakTest.LeakTestId }, null);
+            return CreatedAtAction(nameof(GetById), new { id = leakTest.LeakTestId }, leakTest);
+            
         }
         catch (Exception e)
         {

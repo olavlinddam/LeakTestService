@@ -36,7 +36,7 @@ public class AddSingleConsumer : IMessageConsumer
         
          _channel.ExchangeDeclare("leaktest-exchange", ExchangeType.Direct, durable: true);
         
-         _channel.QueueDeclare("add-single-requests", exclusive: false);
+         _channel.QueueDeclare(queue: "add-single-requests", durable: true, exclusive: false, autoDelete: false, arguments: null);
          _channel.QueueBind("add-single-requests", "leaktest-exchange", "add-single-route");
 
     }
@@ -58,10 +58,13 @@ public class AddSingleConsumer : IMessageConsumer
             // Send the response back
             var responseBody = Encoding.UTF8.GetBytes(responseMessage);
             
+            var replyProperties = _channel.CreateBasicProperties();
+            replyProperties.CorrelationId = ea.BasicProperties.CorrelationId;
+
             _channel.BasicPublish(
                 exchange: "",
                 routingKey: ea.BasicProperties.ReplyTo,
-                basicProperties: null, // potentielt skal vi sende corr id med.
+                basicProperties: replyProperties,
                 body: responseBody
             );
             
