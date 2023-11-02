@@ -196,7 +196,7 @@ public class LeakTestHandler
         }
     }
 
-    public async Task<string> GetByTagAsync(string key, string value)
+    public async Task<IEnumerable<LeakTest>> GetByTagAsync(string key, string value)
     {
         try
         {
@@ -234,9 +234,7 @@ public class LeakTestHandler
                 throw new NoMatchingDataException("No test results match the specified tag key-value pair.");
             }
 
-            var jsonPayload = JsonConvert.SerializeObject(leakTests, Formatting.Indented);
-
-            return jsonPayload;
+            return leakTests;
         }
         catch (NoMatchingDataException noMatchingDataException)
         {
