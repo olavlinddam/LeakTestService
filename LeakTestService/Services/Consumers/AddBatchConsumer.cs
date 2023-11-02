@@ -1,7 +1,11 @@
 using System.Text;
 using System.Text.Json;
+using FluentValidation;
 using LeakTestService.Configuration;
 using LeakTestService.Controllers;
+using LeakTestService.Exceptions;
+using LeakTestService.Models;
+using LeakTestService.Models.DTOs;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -59,12 +63,9 @@ public class AddBatchConsumer : IMessageConsumer
             // Process the message
             var responseMessage = await ProcessRequest(message);
 
-            var stringBuilder = new StringBuilder();
-            responseMessage.ForEach(id => stringBuilder.Append(id + ";"));
-            
             // Send the response back
-            var responseBody = Encoding.UTF8.GetBytes(stringBuilder.ToString());
-
+            var responseBody = Encoding.UTF8.GetBytes(responseMessage);
+            
             var replyProperties = _channel.CreateBasicProperties();
             replyProperties.CorrelationId = ea.BasicProperties.CorrelationId;
 
@@ -75,8 +76,7 @@ public class AddBatchConsumer : IMessageConsumer
                 body: responseBody
             );
 
-            responseMessage.ForEach(id => Console.WriteLine(id));
-
+            Console.WriteLine(responseMessage);
             //_channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         };
 
@@ -89,22 +89,48 @@ public class AddBatchConsumer : IMessageConsumer
         _connection?.Dispose();
     }
     
-    private async Task<List<string>> ProcessRequest(string requestMessage)
+    private async Task<string> ProcessRequest(string requestMessage)
     {
-        using var doc = JsonDocument.Parse(requestMessage);
-        var formattedDoc= doc.RootElement.ToString();
-        
-        // Creating a scope to access the controller
-        using (var scope = _serviceProvider.CreateScope())
+        try
         {
+            using var doc = JsonDocument.Parse(requestMessage);
+            var formattedDoc= doc.RootElement.ToString();
+        
+            // Creating a scope to access the controller
+            using var scope = _serviceProvider.CreateScope();
             var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
             
             // Passing the message to the controller to get an ID of the created resource back
-            var leakTestIds = await leakTestHandler.AddBatchAsync(formattedDoc);
-
-            var processedRequest = new List<string>();
-            leakTestIds.ForEach(id => processedRequest.Add(id.ToString()));
-            return processedRequest;
+            var leakTests = await leakTestHandler.AddBatchAsync(formattedDoc);
+            
+            return CreateApiResponse(200, leakTests, null);
         }
+        catch (NoMatchingDataException e)
+        {
+            Console.WriteLine($"No matching data: {e.Message}");
+            return CreateApiResponse(404, null, e.Message);
+        }
+        catch (ValidationException e)
+        {
+            Console.WriteLine($"Validation failed: {e.Message}");
+            return CreateApiResponse(400, null, e.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An error occurred: {e.Message}");
+            return CreateApiResponse(500, null, e.Message);
+        }
+    }
+    
+    private static string CreateApiResponse(int statusCode, List<LeakTest> data, string errorMessage)
+    {
+        var apiResponse = new ApiResponse<List<LeakTest>>
+        {
+            StatusCode = statusCode,
+            Data = data,
+            ErrorMessage = errorMessage
+        };
+
+        return JsonSerializer.Serialize(apiResponse, new JsonSerializerOptions { WriteIndented = true });
     }
 }

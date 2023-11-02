@@ -1,7 +1,11 @@
 using System.Text;
 using System.Text.Json;
+using FluentValidation;
 using LeakTestService.Configuration;
 using LeakTestService.Controllers;
+using LeakTestService.Exceptions;
+using LeakTestService.Models;
+using LeakTestService.Models.DTOs;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -84,21 +88,47 @@ public class AddSingleConsumer : IMessageConsumer
     
     private async Task<string> ProcessRequest(string requestMessage)
     {
-        using var doc = JsonDocument.Parse(requestMessage);
-        var formattedDoc= doc.RootElement.ToString();
-        
-        // Creating a scope to access the controller
-        using (var scope = _serviceProvider.CreateScope())
+        try
         {
+            using var doc = JsonDocument.Parse(requestMessage);
+            var formattedDoc= doc.RootElement.ToString();
+        
+            // Creating a scope to access the controller
+            using var scope = _serviceProvider.CreateScope();
             var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
             
             // Passing the message to the controller to get an ID of the created resource back
-            var leakTestId = await leakTestHandler.AddSingleAsync(formattedDoc);
-            
-            var processedRequest = leakTestId.ToString();
-            return processedRequest;
+            var leakTest = await leakTestHandler.AddSingleAsync(formattedDoc);
 
+            return CreateApiResponse(200, leakTest, null);
         }
+        catch (NoMatchingDataException e)
+        {
+            Console.WriteLine($"No matching data: {e.Message}");
+            return CreateApiResponse(404, null, e.Message);
+        }
+        catch (ValidationException e)
+        {
+            Console.WriteLine($"Validation failed: {e.Message}");
+            return CreateApiResponse(400, null, e.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An error occurred: {e.Message}");
+            return CreateApiResponse(500, null, e.Message);
+        }
+    }
+    
+    private static string CreateApiResponse(int statusCode, LeakTest data, string errorMessage)
+    {
+        var apiResponse = new ApiResponse<LeakTest>
+        {
+            StatusCode = statusCode,
+            Data = data,
+            ErrorMessage = errorMessage
+        };
+
+        return JsonSerializer.Serialize(apiResponse, new JsonSerializerOptions { WriteIndented = true });
     }
     
     

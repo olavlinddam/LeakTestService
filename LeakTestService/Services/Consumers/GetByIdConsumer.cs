@@ -1,7 +1,10 @@
 using System.Text;
 using System.Text.Json;
+using FluentValidation;
 using LeakTestService.Configuration;
 using LeakTestService.Controllers;
+using LeakTestService.Models;
+using LeakTestService.Models.DTOs;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -88,20 +91,40 @@ public class GetByIdConsumer : IMessageConsumer
     
     private async Task<string> ProcessRequest(string requestMessage)
     {
-        Guid id = Guid.Parse(requestMessage);
-        
-        // Creating a scope to access the controller
-        using (var scope = _serviceProvider.CreateScope())
+        try
         {
+            var id = Guid.Parse(requestMessage);
+        
+            // Creating a scope to access the controller
+            using var scope = _serviceProvider.CreateScope();
             var leakTestHandler = scope.ServiceProvider.GetRequiredService<LeakTestHandler>();
             
             // Passing the message to the controller to get an ID of the created resource back
-            var leakTestId = await leakTestHandler.GetById(id);
-            
-            var processedRequest = leakTestId.ToString();
-            return processedRequest;
+            var leakTest = await leakTestHandler.GetById(id);
+            return CreateApiResponse(200, leakTest, null);
+        }
+        catch (ValidationException e)
+        {
+            Console.WriteLine($"Validation failed: {e.Message}");
+            return CreateApiResponse(400, null, e.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An error occurred: {e.Message}");
+            return CreateApiResponse(500, null, e.Message);
         }
     }
     
+    private static string CreateApiResponse(int statusCode, LeakTest data, string errorMessage)
+    {
+        var apiResponse = new ApiResponse<LeakTest>
+        {
+            StatusCode = statusCode,
+            Data = data,
+            ErrorMessage = errorMessage
+        };
+
+        return JsonSerializer.Serialize(apiResponse, new JsonSerializerOptions { WriteIndented = true });
+    }
     
 }

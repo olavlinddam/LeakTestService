@@ -23,7 +23,7 @@ public class LeakTestHandler
 
     #region Post
 
-    public async Task<Guid> AddSingleAsync(string leakTestString)
+    public async Task<LeakTest> AddSingleAsync(string leakTestString)
     {
         var options = new JsonSerializerOptions
         {
@@ -57,7 +57,7 @@ public class LeakTestHandler
             await _leakTestRepository.AddSingleAsync(leakTest);
             
             // Return the id of the newly created leak test
-            return (Guid)leakTest.LeakTestId;
+            return leakTest;
         }
         catch (Exception e)
         {
@@ -66,7 +66,7 @@ public class LeakTestHandler
         }
     }
     
-    public async Task<List<Guid>> AddBatchAsync(string leakTestString)
+    public async Task<List<LeakTest>> AddBatchAsync(string leakTestString)
     {
         try
         {
@@ -113,16 +113,7 @@ public class LeakTestHandler
             
             await _leakTestRepository.AddBatchAsync(leakTests);
 
-            var ids = new List<Guid>();
-            leakTests.ForEach(lt =>
-            {
-                if (lt.LeakTestId != null) ids.Add((Guid)lt.LeakTestId);
-            });
-            if (ids == null || ids.Count == 0)
-            {
-                throw new Exception("There was an error returning the Ids of the added resources.");
-            }
-            return ids;
+            return leakTests;
         }
         catch (Exception e)
         {
@@ -137,7 +128,7 @@ public class LeakTestHandler
 
     #region Get
 
-    public async Task<string> GetAllAsync()
+    public async Task<List<LeakTest>> GetAllAsync()
     {
         try
         {
@@ -159,9 +150,8 @@ public class LeakTestHandler
                         $"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
                 }
             }
-            
-            return JsonSerializer.Serialize(leakTests, new JsonSerializerOptions { WriteIndented = true });
 
+            return leakTests;
         }
         catch (Exception e)
         {
@@ -171,7 +161,7 @@ public class LeakTestHandler
     }
     
     
-    public async Task<string> GetById(Guid id)
+    public async Task<LeakTest> GetById(Guid id)
     {
         try
         {
@@ -186,8 +176,8 @@ public class LeakTestHandler
             {
                 throw new ValidationException($"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
             }
-            
-            return JsonSerializer.Serialize(leakTest, new JsonSerializerOptions { WriteIndented = true });
+
+            return leakTest;
         }
         catch (Exception e)
         {
@@ -257,7 +247,7 @@ public class LeakTestHandler
         }
     }
     
-    public async Task<string> GetByFieldAsync(string key, string value)
+    public async Task<List<LeakTest>> GetByFieldAsync(string key, string value)
     {
         try
         {
@@ -290,10 +280,8 @@ public class LeakTestHandler
             {
                 throw new NoMatchingDataException("No test results match the specified tag key-value pair.");
             }
-            
-            var jsonPayload = JsonConvert.SerializeObject(leakTests, Formatting.Indented);
 
-            return jsonPayload;
+            return leakTests.ToList();
         }
         catch (NoMatchingDataException noMatchingDataException)
         {
@@ -312,7 +300,7 @@ public class LeakTestHandler
     }
     
     // Start and stop values must be valid DateTimes, input as strings.
-    public async Task<string> GetWithinTimeRangeAsync(DateTime start, DateTime? stop)
+    public async Task<List<LeakTest>> GetWithinTimeRangeAsync(DateTime start, DateTime? stop)
     {
         try
         {
@@ -348,11 +336,7 @@ public class LeakTestHandler
                 }
             }
 
-            // Convert to JSON format
-            var jsonPayload = JsonConvert.SerializeObject(leakTests, Formatting.Indented);
-
-            // Return the JSON payload
-            return jsonPayload;
+            return leakTests;
         }
         catch (Exception e)
         {
