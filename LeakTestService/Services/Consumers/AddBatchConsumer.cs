@@ -124,6 +124,7 @@ public class AddBatchConsumer : IMessageConsumer
     
     private static string CreateApiResponse(int statusCode, List<LeakTest> data, string errorMessage)
     {
+        
         var apiResponse = new ApiResponse<List<LeakTest>>
         {
             StatusCode = statusCode,
