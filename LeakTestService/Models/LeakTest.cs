@@ -19,7 +19,7 @@ public class LeakTest
     [Column("User", IsTag = true)] public string User { get; set; }
 
     // fields
-    [Column("SniffingPoint")] public string SniffingPoint { get; set; }
+    [Column("SniffingPoint")] public Guid SniffingPoint { get; set; }
     [Column("Reason")] public string? Reason { get; set; }
     
     /// <summary>

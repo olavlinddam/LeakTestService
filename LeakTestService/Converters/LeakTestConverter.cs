@@ -56,7 +56,7 @@ public class LeakTestConverter : IDomainObjectMapper, IMemberNameResolver
             leakTest.TestObjectId = Guid.Parse(fluxRecord.GetValueByKey("TestObjectId")?.ToString());
             leakTest.TestObjectType = fluxRecord.GetValueByKey("TestObjectType")?.ToString();
             leakTest.LeakTestId = Guid.Parse(fluxRecord.GetValueByKey("LeakTestId").ToString());
-            leakTest.SniffingPoint = fluxRecord.GetValueByKey("SniffingPoint")?.ToString();
+            leakTest.SniffingPoint = Guid.Parse(fluxRecord.GetValueByKey("SniffingPoint")?.ToString());
             leakTest.User = fluxRecord.GetValueByKey("User")?.ToString();
             leakTest.Reason = fluxRecord.GetValueByKey("Reason")?.ToString() ?? null;
             

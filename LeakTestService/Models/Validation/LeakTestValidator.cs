@@ -37,24 +37,29 @@ public class LeakTestValidator : AbstractValidator<LeakTest>
             .WithMessage("User is empty");
 
 
+        // RuleFor(x => x.SniffingPoint)
+        //     .NotEmpty().WithMessage("SniffingPoint cannot be empty.")
+        //     .NotNull().WithMessage("SniffingPoint cannot be null.")
+        //     .Custom((value, context) =>
+        //     {
+        //         if (string.IsNullOrWhiteSpace(value))
+        //         {
+        //             context.AddFailure("SniffingPoint should not be whitespace.");
+        //         }
+        //         else if (!Regex.IsMatch(value, @"^[a-zA-Z0-9-_]+$"))
+        //         {
+        //             context.AddFailure("SniffingPoint can only contain alphanumeric characters, hyphens, and underscores.");
+        //         }
+        //     })
+        //     .Length(1, 999).WithMessage("SniffingPoint must have a length between 1 and 999 characters.");
+        //
+        // RuleFor(x => x.Measurement)
+        //     .Equal("LeakTest").WithMessage("The measurement for LeakTest objects must be 'LeakTest'.");
+
         RuleFor(x => x.SniffingPoint)
             .NotEmpty().WithMessage("SniffingPoint cannot be empty.")
             .NotNull().WithMessage("SniffingPoint cannot be null.")
-            .Custom((value, context) =>
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    context.AddFailure("SniffingPoint should not be whitespace.");
-                }
-                else if (!Regex.IsMatch(value, @"^[a-zA-Z0-9-_]+$"))
-                {
-                    context.AddFailure("SniffingPoint can only contain alphanumeric characters, hyphens, and underscores.");
-                }
-            })
-            .Length(1, 999).WithMessage("SniffingPoint must have a length between 1 and 999 characters.");
-
-        RuleFor(x => x.Measurement)
-            .Equal("LeakTest").WithMessage("The measurement for LeakTest objects must be 'LeakTest'.");
+            .Must(x => x != Guid.Empty).WithMessage("Sniffing point is empty.");
     }
     
     
