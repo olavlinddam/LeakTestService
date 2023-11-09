@@ -5,6 +5,7 @@ using LeakTestService.Models.Validation;
 using LeakTestService.Repositories;
 using LeakTestService.Services;
 using System.Text.Json;
+using FluentValidation.TestHelper;
 using InfluxDB.Client.Core.Exceptions;
 using LeakTestService.Exceptions;
 using Newtonsoft.Json;
@@ -52,6 +53,23 @@ public class LeakTestHandler
             {
                 throw new ValidationException(
                     $"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
+            }
+
+            var existingLeakTests = await _leakTestRepository.GetByTagAsync("TestObjectId", leakTest.TestObjectId.ToString());
+
+            existingLeakTests = existingLeakTests.ToList();
+            if (existingLeakTests.Any())
+            {
+                var latestTestForSniffingPoint = existingLeakTests.AsQueryable()
+                    .Where(x => x.SniffingPoint == leakTest.SniffingPoint)
+                    .OrderByDescending(x => x.TimeStamp)
+                    .FirstOrDefault();
+
+                if (latestTestForSniffingPoint.Status == "NOK" && leakTest is { Status: "OK", Reason: null })
+                {
+                    throw new ValidationException(
+                        "Please provide a reason for changing the status from 'NOK' to 'OK'.");
+                }
             }
 
             // Posting the LeakTest object as a point in the database. 
@@ -114,11 +132,33 @@ public class LeakTestHandler
                 {
                     throw new ValidationException($"LeakTest object could not be validated: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
                 }
+                
+                var existingLeakTests = await _leakTestRepository.GetByTagAsync("TestObjectId", leakTest.TestObjectId.ToString());
+
+                existingLeakTests = existingLeakTests.ToList();
+                if (existingLeakTests.Any())
+                {
+                    var latestTestForSniffingPoint = existingLeakTests.AsQueryable()
+                        .Where(x => x.SniffingPoint == leakTest.SniffingPoint)
+                        .OrderByDescending(x => x.TimeStamp)
+                        .FirstOrDefault();
+
+                    if (latestTestForSniffingPoint.Status == "NOK" && leakTest is { Status: "OK", Reason: null })
+                    {
+                        throw new ValidationException(
+                            $"Please provide a reason for changing the status of sniffing point <{leakTest.SniffingPoint}> from 'NOK' to 'OK'.");
+                    }
+                }
             }
+            
             
             await _leakTestRepository.AddBatchAsync(leakTests);
 
             return leakTests;
+        }
+        catch (ValidationException e)
+        {
+            throw;
         }
         catch (Exception e)
         {
