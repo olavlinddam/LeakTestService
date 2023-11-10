@@ -57,11 +57,11 @@ public class LeakTestHandler
 
             var existingLeakTests = await _leakTestRepository.GetByTagAsync("TestObjectId", leakTest.TestObjectId.ToString());
 
-            existingLeakTests = existingLeakTests.ToList();
+            existingLeakTests = existingLeakTests.ToList().Where(x => x.SniffingPoint == leakTest.SniffingPoint);
+
             if (existingLeakTests.Any())
             {
                 var latestTestForSniffingPoint = existingLeakTests.AsQueryable()
-                    .Where(x => x.SniffingPoint == leakTest.SniffingPoint)
                     .OrderByDescending(x => x.TimeStamp)
                     .FirstOrDefault();
 
@@ -135,15 +135,15 @@ public class LeakTestHandler
                 
                 var existingLeakTests = await _leakTestRepository.GetByTagAsync("TestObjectId", leakTest.TestObjectId.ToString());
 
-                existingLeakTests = existingLeakTests.ToList();
+                existingLeakTests = existingLeakTests.ToList().Where(x => x.SniffingPoint == leakTest.SniffingPoint);
                 if (existingLeakTests.Any())
                 {
                     var latestTestForSniffingPoint = existingLeakTests.AsQueryable()
-                        .Where(x => x.SniffingPoint == leakTest.SniffingPoint)
+                        .Where(x => x.SniffingPoint == leakTest.SniffingPoint) 
                         .OrderByDescending(x => x.TimeStamp)
                         .FirstOrDefault();
 
-                    if (latestTestForSniffingPoint.Status == "NOK" && leakTest is { Status: "OK", Reason: null })
+                    if (latestTestForSniffingPoint is { Status: "NOK" } && leakTest is { Status: "OK", Reason: null })
                     {
                         throw new ValidationException(
                             $"Please provide a reason for changing the status of sniffing point <{leakTest.SniffingPoint}> from 'NOK' to 'OK'.");
