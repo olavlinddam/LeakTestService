@@ -64,7 +64,9 @@ public class LeakTestRepository : ILeakTestRepository
                 var query = from t in InfluxDBQueryable<LeakTest>
                         .Queryable(_config.Bucket, _config.Org, queryApi, optimizerSettings)
                     select t;
-            
+
+                Console.WriteLine(_config.Url);
+                Console.WriteLine(_config.Token);
                 var leakTests = query.ToList();
 
                 return leakTests;
@@ -72,6 +74,7 @@ public class LeakTestRepository : ILeakTestRepository
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.InnerException);
             throw new BadHttpRequestException($"The request could not be processed. {e.Message}");
         }
     }

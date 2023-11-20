@@ -1,13 +1,14 @@
 version: '3'
 services:
   leaktestservice: 
-    build:
-      context: .
-      dockerfile: ./LeakTestService/Dockerfile
+    image: olavlinddam/leakmonitor:leaktestservice
     ports:
       - "5000:80"
     environment:
       - ASPNETCORE_ENVIRONMENT=docker
+      - InfluxDbConfigSettings__Token=OU6GSmo9wFhNfDt62qXnjj_8QnHWrIS_pW_rTFwT9MRTEYuw6opA3cpzz2uhzxSBrCNWKPjL610LmPutFaLvOg==
+    deploy: 
+      replicas: 2
     restart: on-failure
     depends_on:
       - influxdb
@@ -24,9 +25,45 @@ services:
     ports:
       - "8080:15672"
       - "5672:5672"
+    deploy: 
+      replicas: 1
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
-      interval: 5s
-      timeout: 15s
-      retries: 1
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  gatewayservice:
+    image: olavlinddam/leakmonitor:gatewayservice
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=docker
+    deploy: 
+      replicas: 2
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      
+  testobjectservice:
+    image: olavlinddam/leakmonitor:testobjectservice
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=docker 
+    deploy: 
+      replicas: 2
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - sql
+    
+  sql:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    hostname: "sql"
+    ports:
+      - "1433:1433" 
+    environment:
+      - "ACCEPT_EULA=Y"
+      - "MSSQL_SA_PASSWORD=Passw0rd"
 

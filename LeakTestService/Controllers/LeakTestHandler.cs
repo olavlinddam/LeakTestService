@@ -200,6 +200,7 @@ public class LeakTestHandler
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.InnerException);
             // Log the exception here
             throw new Exception($"The request could not be processed due to: {e.Message}");
         }

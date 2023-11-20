@@ -1,8 +1,6 @@
 # Using the official .net 7.0 image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
-# Ports to expose
-EXPOSE 80
 
 # Using the official .net 7.0 sdk image
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
