@@ -1,4 +1,4 @@
-# LeakTestService
+# LeakTestService - School project
 
 The LeakTestService is the service responsible for handling CRUD operations related to test results. It is part of a microservices application including [GatewayService](https://github.com/olavlinddam/GatewayService) and [TestObjectService](https://github.com/olavlinddam/TestObjectService). The services are containerized and set up as a Docker Swarm to ensure stability and high availability. They communicate via RabbitMQ which makes the application services highly decoupled.
 
